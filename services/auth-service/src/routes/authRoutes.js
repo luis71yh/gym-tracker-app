@@ -435,7 +435,6 @@ router.get('/stats', authenticateToken, async (req, res) => {
         }
       })
     ])
-    }
 
     return successResponse(res, {
       totalUsers,
