@@ -64,69 +64,40 @@ $adminToken = $adminLogin.data.token
 Write-Host "✅ Admin token obtenido"
 ```
 
-#### 2.2 Crear ejercicios de prueba (necesarios para las rutinas)
+#### 2.2 Usar ejercicios existentes (ya creados en tu base de datos)
 ```powershell
-Write-Host "📝 Creando ejercicios de prueba..."
+Write-Host "📝 Usando ejercicios existentes de la base de datos..."
 
-# Ejercicio 1: Press de Banca
-$ejercicio1 = @{
-    name = "Press de Banca"
-    description = "Ejercicio fundamental para pecho, hombros y tríceps"
-    aliases = @("Bench Press", "Press Plano", "Banca")
-} | ConvertTo-Json
+# Asignar IDs de ejercicios existentes (según pgAdmin)
+$ejercicioId1 = 1  # Press de Banca
+$ejercicioId2 = 2  # Sentadilla  
+$ejercicioId3 = 3  # Peso Muerto
+$ejercicioId4 = 4  # Dominadas
 
-$response1 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises" `
-    -Method POST `
-    -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $adminToken"} `
-    -Body $ejercicio1
+Write-Host "✅ Usando: Press de Banca (ID: $ejercicioId1)"
+Write-Host "✅ Usando: Sentadilla (ID: $ejercicioId2)"
+Write-Host "✅ Usando: Peso Muerto (ID: $ejercicioId3)"
+Write-Host "✅ Usando: Dominadas (ID: $ejercicioId4)"
 
-$ejercicioId1 = $response1.data.id
-Write-Host "✅ Creado: Press de Banca (ID: $ejercicioId1)"
-
-# Ejercicio 2: Sentadilla
-$ejercicio2 = @{
-    name = "Sentadilla"
-    description = "Ejercicio compuesto para piernas y glúteos"
-    aliases = @("Squat", "Sentadillas", "Cuclillas")
-} | ConvertTo-Json
-
-$response2 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises" `
-    -Method POST `
-    -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $adminToken"} `
-    -Body $ejercicio2
-
-$ejercicioId2 = $response2.data.id
-Write-Host "✅ Creado: Sentadilla (ID: $ejercicioId2)"
-
-# Ejercicio 3: Peso Muerto
-$ejercicio3 = @{
-    name = "Peso Muerto"
-    description = "Ejercicio compuesto para espalda, glúteos y piernas"
-    aliases = @("Deadlift", "Peso Muerto Convencional", "DL")
-} | ConvertTo-Json
-
-$response3 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises" `
-    -Method POST `
-    -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $adminToken"} `
-    -Body $ejercicio3
-
-$ejercicioId3 = $response3.data.id
-Write-Host "✅ Creado: Peso Muerto (ID: $ejercicioId3)"
-
-# Ejercicio 4: Dominadas
-$ejercicio4 = @{
-    name = "Dominadas"
-    description = "Ejercicio para espalda y bíceps"
-    aliases = @("Pull-ups", "Chin-ups", "Dominadas Supinas")
-} | ConvertTo-Json
-
-$response4 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises" `
-    -Method POST `
-    -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $adminToken"} `
-    -Body $ejercicio4
-
-$ejercicioId4 = $response4.data.id
-Write-Host "✅ Creado: Dominadas (ID: $ejercicioId4)"
+# Verificar que los ejercicios existen
+Write-Host "`n🔍 Verificando que los ejercicios existen..."
+try {
+    $verificacion1 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises/$ejercicioId1" -Method GET
+    Write-Host "✅ Verificado: $($verificacion1.data.name)"
+    
+    $verificacion2 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises/$ejercicioId2" -Method GET
+    Write-Host "✅ Verificado: $($verificacion2.data.name)"
+    
+    $verificacion3 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises/$ejercicioId3" -Method GET
+    Write-Host "✅ Verificado: $($verificacion3.data.name)"
+    
+    $verificacion4 = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises/$ejercicioId4" -Method GET
+    Write-Host "✅ Verificado: $($verificacion4.data.name)"
+} catch {
+    Write-Host "❌ Error: Uno o más ejercicios no existen. Verifica los IDs en pgAdmin."
+    Write-Host "Error: $($_.Exception.Message)"
+    exit
+}
 ```
 
 #### 2.3 Login como usuario normal y obtener token
@@ -675,22 +646,9 @@ $adminToken = $adminLogin.data.token
 Write-Host "✅ Token de admin obtenido"
 
 # 3. Crear ejercicios de prueba
-Write-Host "`n3️⃣ Creando ejercicios de prueba..." -ForegroundColor Yellow
-$ejercicios = @(
-    @{ name = "Press de Banca"; description = "Ejercicio para pecho"; aliases = @("Bench Press", "Banca") },
-    @{ name = "Sentadilla"; description = "Ejercicio para piernas"; aliases = @("Squat", "Cuclillas") }
-)
-
-$ejerciciosIds = @()
-foreach ($ejercicio in $ejercicios) {
-    $body = $ejercicio | ConvertTo-Json
-    $response = Invoke-RestMethod -Uri "http://localhost:3002/api/exercises" `
-        -Method POST `
-        -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $adminToken"} `
-        -Body $body
-    $ejerciciosIds += $response.data.id
-    Write-Host "✅ Creado: $($ejercicio.name) (ID: $($response.data.id))"
-}
+# Usar ejercicios existentes de la base de datos
+$ejerciciosIds = @(1, 2, 3, 4)  # IDs de ejercicios existentes
+Write-Host "✅ Usando ejercicios existentes: Press de Banca (1), Sentadilla (2), Peso Muerto (3), Dominadas (4)"
 
 # 4. Login como usuario normal
 Write-Host "`n4️⃣ Creando y logueando usuario normal..." -ForegroundColor Yellow
