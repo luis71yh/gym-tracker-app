@@ -1,6 +1,10 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuth()
+
   return (
     <div className="px-4 py-8">
       <div className="text-center">
@@ -39,12 +43,20 @@ const HomePage: React.FC = () => {
         </div>
         
         <div className="space-x-4">
-          <a href="/register" className="btn-primary text-lg px-8 py-3">
-            Comenzar Ahora
-          </a>
-          <a href="/login" className="btn-secondary text-lg px-8 py-3">
-            Iniciar Sesión
-          </a>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn-primary text-lg px-8 py-3">
+              Ir al Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link to="/register" className="btn-primary text-lg px-8 py-3">
+                Comenzar Ahora
+              </Link>
+              <Link to="/login" className="btn-secondary text-lg px-8 py-3">
+                Iniciar Sesión
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

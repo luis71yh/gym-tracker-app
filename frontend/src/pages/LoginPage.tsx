@@ -1,6 +1,43 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import LoadingSpinner from '../components/LoadingSpinner'
+import ErrorMessage from '../components/ErrorMessage'
 
 const LoginPage: React.FC = () => {
+  const { login, isAuthenticated } = useAuth()
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      await login(formData.username, formData.password)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al iniciar sesión')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -12,7 +49,12 @@ const LoginPage: React.FC = () => {
             Accede a tu cuenta para gestionar tus rutinas
           </p>
         </div>
-        <form className="mt-8 space-y-6">
+        
+        {error && (
+          <ErrorMessage message={error} onRetry={() => setError('')} />
+        )}
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -23,6 +65,9 @@ const LoginPage: React.FC = () => {
                 name="username"
                 type="text"
                 required
+                value={formData.username}
+                onChange={handleChange}
+                disabled={isLoading}
                 className="input-field mt-1"
                 placeholder="Ingresa tu usuario"
               />
@@ -36,6 +81,9 @@ const LoginPage: React.FC = () => {
                 name="password"
                 type="password"
                 required
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
                 className="input-field mt-1"
                 placeholder="Ingresa tu contraseña"
               />
@@ -45,18 +93,26 @@ const LoginPage: React.FC = () => {
           <div>
             <button
               type="submit"
-              className="w-full btn-primary py-3"
+              disabled={isLoading}
+              className="w-full btn-primary py-3 flex items-center justify-center"
             >
-              Iniciar Sesión
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar Sesión'
+              )}
             </button>
           </div>
           
           <div className="text-center">
             <p className="text-sm text-gray-600">
               ¿No tienes cuenta?{' '}
-              <a href="/register" className="font-medium text-primary-600 hover:text-primary-500">
+              <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
                 Regístrate aquí
-              </a>
+              </Link>
             </p>
           </div>
         </form>
