@@ -22,7 +22,7 @@ export const workoutApi = axios.create({
 })
 
 // Request interceptor to add auth token
-const addAuthInterceptor = (apiInstance: typeof axios) => {
+const addAuthInterceptor = (apiInstance: ReturnType<typeof axios.create>) => {
   apiInstance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('fitness_token')
@@ -38,7 +38,7 @@ const addAuthInterceptor = (apiInstance: typeof axios) => {
 }
 
 // Response interceptor for error handling
-const addResponseInterceptor = (apiInstance: typeof axios) => {
+const addResponseInterceptor = (apiInstance: ReturnType<typeof axios.create>) => {
   apiInstance.interceptors.response.use(
     (response) => response,
     (error) => {
