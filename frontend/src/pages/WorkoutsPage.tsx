@@ -177,7 +177,7 @@ const WorkoutsPage: React.FC = () => {
                     )}
                     
                     <div className="flex flex-wrap gap-2">
-                      {[...new Set(workout.sets?.map((set: any) => set.exerciseName) || [])].map((exerciseName: string) => (
+                      {Array.from(new Set(workout.sets.map(set => set.exerciseName))).map((exerciseName: string) => (
                         <span
                           key={exerciseName}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
