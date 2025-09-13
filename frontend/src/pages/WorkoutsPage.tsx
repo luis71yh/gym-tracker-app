@@ -5,16 +5,44 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import { Search, Calendar, Clock, TrendingUp, Eye, Trash2 } from 'lucide-react'
 
+type WorkoutSet = { exerciseName: string }
+type Workout = {
+  id: number
+  routineName: string
+  completedAt?: string | null
+  startedAt: string
+  duration?: number
+  notes?: string
+  sets?: WorkoutSet[]
+}
+
+type Pagination = {
+  page: number
+  limit: number
+  total: number
+  pages: number
+}
+
+type DateFilter = {
+  startDate: string
+  endDate: string
+}
+
+type GetWorkoutsResponse = {
+  workouts: Workout[]
+  pagination: Pagination
+}
+
 const WorkoutsPage: React.FC = () => {
-  const [workouts, setWorkouts] = useState<any[]>([])
+  const [workouts, setWorkouts] = useState<Workout[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [dateFilter, setDateFilter] = useState({
+  const [dateFilter, setDateFilter] = useState<DateFilter>({
     startDate: '',
     endDate: ''
   })
-  const [pagination, setPagination] = useState({
+  const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 10,
     total: 0,
@@ -23,22 +51,25 @@ const WorkoutsPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkouts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, searchQuery, dateFilter])
 
   const loadWorkouts = async () => {
     try {
       setIsLoading(true)
-      const data = await workoutService.getWorkouts({
+      const data = (await workoutService.getWorkouts({
         q: searchQuery || undefined,
         page: pagination.page,
         limit: pagination.limit,
         startDate: dateFilter.startDate || undefined,
         endDate: dateFilter.endDate || undefined
-      })
+      })) as GetWorkoutsResponse
+
       setWorkouts(data.workouts)
       setPagination(prev => ({ ...prev, ...data.pagination }))
+      setError('')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar los entrenamientos')
+      setError(err?.response?.data?.message || 'Error al cargar los entrenamientos')
     } finally {
       setIsLoading(false)
     }
@@ -46,20 +77,17 @@ const WorkoutsPage: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    // Solo cambiamos de página para que el useEffect dispare la carga (evita doble fetch)
     setPagination(prev => ({ ...prev, page: 1 }))
-    loadWorkouts()
   }
 
   const handleDelete = async (id: number, routineName: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar el entrenamiento "${routineName}"?`)) {
-      return
-    }
-
+    if (!confirm(`¿Estás seguro de que quieres eliminar el entrenamiento "${routineName}"?`)) return
     try {
       await workoutService.deleteWorkout(id)
-      loadWorkouts()
+      await loadWorkouts()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Error al eliminar el entrenamiento')
+      alert(err?.response?.data?.message || 'Error al eliminar el entrenamiento')
     }
   }
 
@@ -74,7 +102,7 @@ const WorkoutsPage: React.FC = () => {
     <div className="px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Mis Entrenamientos</h1>
-        
+
         <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="flex gap-4">
@@ -92,7 +120,7 @@ const WorkoutsPage: React.FC = () => {
                 Buscar
               </button>
             </div>
-            
+
             <div className="flex gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -148,7 +176,7 @@ const WorkoutsPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="flex items-center space-x-6 text-sm text-gray-500 mb-3">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
@@ -169,15 +197,21 @@ const WorkoutsPage: React.FC = () => {
                         {workout.sets?.length || 0} series
                       </div>
                     </div>
-                    
+
                     {workout.notes && (
                       <p className="text-sm text-gray-600 mb-3">
                         {workout.notes}
                       </p>
                     )}
-                    
+
                     <div className="flex flex-wrap gap-2">
-                      {Array.from(new Set(workout.sets.map(set => set.exerciseName))).map((exerciseName: string) => (
+                      {Array.from(
+                        new Set(
+                          (workout.sets ?? [])
+                            .map((s) => s?.exerciseName)
+                            .filter(Boolean) as string[]
+                        )
+                      ).map((exerciseName) => (
                         <span
                           key={exerciseName}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
@@ -187,7 +221,7 @@ const WorkoutsPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="flex space-x-2 ml-4">
                     <Link
                       to={`/workouts/${workout.id}`}
@@ -208,7 +242,7 @@ const WorkoutsPage: React.FC = () => {
               </div>
             ))}
           </div>
-          
+
           {pagination.pages > 1 && (
             <div className="flex justify-center mt-8">
               <div className="flex space-x-2">
@@ -237,8 +271,8 @@ const WorkoutsPage: React.FC = () => {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📊</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchQuery || dateFilter.startDate || dateFilter.endDate 
-              ? 'No se encontraron entrenamientos' 
+            {searchQuery || dateFilter.startDate || dateFilter.endDate
+              ? 'No se encontraron entrenamientos'
               : 'No tienes entrenamientos registrados'
             }
           </h3>
